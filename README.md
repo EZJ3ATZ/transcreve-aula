@@ -66,7 +66,7 @@ anatômicos que a aula de fato cita cada um escreveu corretamente.
 |---|---|---|
 | **`large-v3-turbo`** | **18/19** | 0,74x tempo real |
 | `large-v3-turbo` + vocabulário | 17/19 | 1,01x |
-| `large-v3` | 16/19 | 1,61x |
+| `large-v3` | 16/19 | 1,25x |
 | legenda automática do YouTube | 14/19 | — |
 | `medium` | 13/19 | 0,80x |
 | `small` | 9/19 | 0,31x |
@@ -99,7 +99,8 @@ medição.
 ## Como o áudio é preparado
 
 O navegador decodifica o arquivo, reamostra para 16 kHz mono (o que o Whisper usa) e corta
-em blocos de 10 minutos — cerca de 19 MB em WAV, abaixo do limite de 25 MB da Groq. O corte
+em blocos de 5 minutos — cerca de 9,6 MB em WAV. O limite da Groq é 25 MB, mas bloco de
+10 minutos (19 MB) travava o upload em rede lenta, então o corte é mais curto de propósito. Ele
 não cai num ponto fixo: o código procura, numa janela de 5 segundos em volta, o trecho de
 menor energia, para a emenda não partir uma palavra ao meio.
 
