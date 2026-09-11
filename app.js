@@ -14,9 +14,12 @@ const GROQ_MODELO   = 'whisper-large-v3-turbo';
 const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages';
 
 const TAXA           = 16000;  // o Whisper trabalha em 16 kHz; mandar mais é só peso
-const BLOCO_SEG      = 600;    // 10 min -> ~19 MB em WAV, abaixo do limite de 25 MB da Groq
+const BLOCO_SEG      = 300;    // 5 min -> ~9,6 MB. Cabe no limite de 25 MB da Groq com folga,
+                               // e sobretudo sobe em rede móvel: 10 min (19 MB) estourava o
+                               // tempo de upload e o app ficava parado sem dizer nada.
 const BUSCA_CORTE    = 5;      // procura o ponto mais silencioso nestes segundos ao redor do corte
 const LIMITE_GROQ_MB = 25;
+const TIMEOUT_MS     = 180000; // 3 min por bloco; passou disso, tenta de novo
 
 /* ------------------------------------------------------------------
    Vocabulário por matéria — entra no parâmetro `prompt` da Groq.
@@ -248,8 +251,24 @@ async function transcreverBloco(blob, chave, glossario, tentativa = 0) {
 
   let r;
   try {
-    r = await fetch(GROQ_URL, { method: 'POST', headers: { Authorization: `Bearer ${chave}` }, body: fd });
+    r = await fetch(GROQ_URL, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${chave}` },
+      body: fd,
+      signal: AbortSignal.timeout(TIMEOUT_MS)
+    });
   } catch (e) {
+    const expirou = e.name === 'TimeoutError' || e.name === 'AbortError';
+    if (expirou && tentativa < 2) {
+      registrar(`O envio passou de ${TIMEOUT_MS / 1000}s. Tentando de novo (${tentativa + 2}ª vez).`);
+      return transcreverBloco(blob, chave, glossario, tentativa + 1);
+    }
+    if (expirou) {
+      throw new Error(
+        'O envio do áudio para a Groq estourou o tempo três vezes. Costuma ser internet lenta — ' +
+        'tente numa rede melhor, ou diminua BLOCO_SEG no app.js.'
+      );
+    }
     throw new Error('Não consegui falar com a Groq. Verifique a conexão. (' + e.message + ')');
   }
 
@@ -455,10 +474,18 @@ async function transcrever() {
       if (mb > LIMITE_GROQ_MB) {
         throw new Error(`O bloco ${i + 1} ficou com ${mb.toFixed(1)} MB, acima do limite de ${LIMITE_GROQ_MB} MB da Groq.`);
       }
+      progresso(
+        0.05 + 0.95 * (i / blocos.length),
+        `Enviando bloco ${i + 1} de ${blocos.length} (${mb.toFixed(1)} MB)…`
+      );
+      const t = performance.now();
       const texto = await transcreverBloco(wav, chave, glossario);
       partes.push(texto);
-      registrar(`Bloco ${i + 1}/${blocos.length} — ${mb.toFixed(1)} MB, ${texto.split(/\s+/).length} palavras.`);
-      progresso(0.05 + 0.95 * ((i + 1) / blocos.length), `Transcrevendo ${i + 1} de ${blocos.length}…`);
+      registrar(
+        `Bloco ${i + 1}/${blocos.length} — ${mb.toFixed(1)} MB, ` +
+        `${texto.split(/\s+/).length} palavras, ${((performance.now() - t) / 1000).toFixed(0)}s.`
+      );
+      progresso(0.05 + 0.95 * ((i + 1) / blocos.length));
     }
 
     estado.transcricao = partes.join('\n\n');
