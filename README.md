@@ -41,6 +41,21 @@ Custo por hora de aula, com os preços de setembro de 2026:
 O plano gratuito da Groq dá 8 horas de áudio por dia, o que cobre um dia de aula inteiro
 sem pagar nada.
 
+## Referências de design
+
+A interface segue o padrão que se repete nos apps do nicho — Coconote, Turbo AI e Knowt:
+fundo claro quente em vez de branco puro, tipografia display pesada no topo, um acento
+vibrante, canto muito arredondado e o resultado apresentado em abas.
+
+Duas coisas foram feitas diferente de propósito:
+
+- **A forma de onda é o áudio de verdade.** O arquivo é decodificado no navegador e
+  desenhado a partir das amostras reais, e o progresso da transcrição pinta a onda da
+  esquerda para a direita. Não é enfeite: mostra onde o áudio tem fala e onde tem silêncio.
+- **O resultado é para usar, não para ler.** As questões são clicáveis com gabarito e
+  justificativa na hora, e os flashcards viram no clique. O Claude devolve JSON validado
+  por esquema, não markdown.
+
 ## A bancada
 
 A escolha do motor não foi por reputação: seis motores rodaram no **mesmo trecho de 6

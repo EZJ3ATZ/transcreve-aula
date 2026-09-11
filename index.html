@@ -5,123 +5,185 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Transcreve Aula</title>
 <link rel="preconnect" href="https://api.fontshare.com">
-<link href="https://api.fontshare.com/v2/css?f[]=switzer@400,500,600,700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://cdn.fontshare.com" crossorigin>
+<link href="https://api.fontshare.com/v2/css?f[]=switzer@400,500,600,700,800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<header class="topo">
-  <div class="marca">
-    <span class="marca-sigla">TA</span>
-    <div>
-      <h1>Transcreve Aula</h1>
-      <p class="sub">Grava no gravador do celular. Transcreve e resume aqui.</p>
-    </div>
+<nav class="nav">
+  <div class="nav-marca">
+    <svg class="nav-logo" viewBox="0 0 32 32" aria-hidden="true">
+      <rect width="32" height="32" rx="9"/>
+      <g class="onda">
+        <rect x="8"  y="13" width="2.5" height="6"  rx="1.25"/>
+        <rect x="13" y="9"  width="2.5" height="14" rx="1.25"/>
+        <rect x="18" y="11" width="2.5" height="10" rx="1.25"/>
+        <rect x="23" y="14" width="2.5" height="4"  rx="1.25"/>
+      </g>
+    </svg>
+    <span>Transcreve Aula</span>
   </div>
-  <button id="btn-config" class="btn-texto" type="button">Chaves</button>
-</header>
+  <button id="btn-config" class="pill pill-clara" type="button">Minhas chaves</button>
+</nav>
 
 <main>
 
-  <!-- ETAPA 0: chaves -->
-  <section id="painel-config" class="cartao oculto">
-    <h2>Chaves de API</h2>
-    <p class="nota">
-      As chaves ficam salvas só neste navegador (<code>localStorage</code>). Não passam por
-      nenhum servidor nosso e não vão para o GitHub. Quem abrir o site usa a própria chave.
+  <!-- ============ HERO + ENTRADA ============ -->
+  <section class="hero" id="tela-entrada">
+    <h1>Saia da aula<br><em>com a matéria pronta.</em></h1>
+    <p class="hero-sub">
+      Grave no gravador do seu celular, solte o arquivo aqui e receba resumo,
+      questões e flashcards da sua aula.
     </p>
 
-    <label for="chave-groq">Chave da Groq <span class="obrig">obrigatória</span></label>
-    <input type="password" id="chave-groq" placeholder="gsk_..." autocomplete="off" spellcheck="false">
-    <p class="dica">Transcrição. Grátis até 8 h de áudio por dia. Pegue em <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com/keys</a>.</p>
+    <div class="palco">
+      <div id="area-solta" class="solta">
+        <input type="file" id="arquivo" accept="audio/*,video/*" hidden>
 
-    <label for="chave-anthropic">Chave da Anthropic <span class="opc">opcional</span></label>
-    <input type="password" id="chave-anthropic" placeholder="sk-ant-..." autocomplete="off" spellcheck="false">
-    <p class="dica">Só para o resumo. Sem ela, o site transcreve e você leva o texto para onde quiser.</p>
+        <div class="formatos">
+          <span class="formato" title="Áudio">
+            <svg viewBox="0 0 24 24"><path d="M12 3v12m-4-9v6m8-8v10m-12-5v0M20 9v6"/></svg>
+          </span>
+          <span class="formato" title="Gravação do celular">
+            <svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
+          </span>
+          <span class="formato" title="Vídeo">
+            <svg viewBox="0 0 24 24"><rect x="3" y="6" width="12" height="12" rx="2.5"/><path d="m15 11 6-3.5v9L15 13"/></svg>
+          </span>
+        </div>
 
-    <label for="modelo-analise">Modelo do resumo</label>
-    <select id="modelo-analise">
-      <option value="claude-opus-5">Opus 5 — melhor resumo, ~R$ 0,93 por hora de aula</option>
-      <option value="claude-sonnet-5" selected>Sonnet 5 — ~R$ 0,37 por hora de aula</option>
-      <option value="claude-haiku-4-5">Haiku 4.5 — mais barato, ~R$ 0,19 por hora de aula</option>
-    </select>
-
-    <div class="acoes">
-      <button id="btn-salvar-chaves" class="btn" type="button">Salvar</button>
-      <button id="btn-limpar-chaves" class="btn-texto perigo" type="button">Apagar chaves deste navegador</button>
-    </div>
-    <p id="status-chaves" class="status"></p>
-  </section>
-
-  <!-- ETAPA 1: arquivo + matéria -->
-  <section class="cartao">
-    <h2><span class="passo">1</span> Áudio da aula</h2>
-
-    <div id="area-solta" class="solta">
-      <input type="file" id="arquivo" accept="audio/*,video/*" hidden>
-      <p class="solta-titulo">Arraste o arquivo aqui ou <button id="btn-escolher" class="link" type="button">escolha do computador</button></p>
-      <p class="dica">
-        Grave a aula com o gravador do próprio celular — ele grava com a tela desligada e no
-        bolso. Depois passe o arquivo para cá. m4a, mp3, wav, ogg ou o áudio de um vídeo.
-      </p>
-    </div>
-
-    <div id="info-arquivo" class="info oculto"></div>
-
-    <label for="materia">Matéria da aula</label>
-    <select id="materia"></select>
-    <p class="dica">
-      O vocabulário da matéria entra junto com o áudio e muda o resultado: no meu teste,
-      em áudio de sala de aula ele recuperou 3 de cada 8 termos técnicos que se perdiam sem ele.
-    </p>
-
-    <details class="avancado">
-      <summary>Ver ou editar o vocabulário</summary>
-      <textarea id="glossario" rows="4" spellcheck="false"></textarea>
-      <p class="dica">A Groq corta esse campo em 224 tokens (~150 palavras). Ponha os termos que mais caem na prova primeiro.</p>
-    </details>
-
-    <button id="btn-transcrever" class="btn btn-grande" type="button" disabled>Transcrever</button>
-  </section>
-
-  <!-- ETAPA 2: progresso -->
-  <section id="painel-progresso" class="cartao oculto">
-    <h2><span class="passo">2</span> Andamento</h2>
-    <div class="barra"><div id="barra-preenche"></div></div>
-    <p id="texto-progresso" class="status"></p>
-    <ul id="log" class="log"></ul>
-  </section>
-
-  <!-- ETAPA 3: resultado -->
-  <section id="painel-resultado" class="cartao oculto">
-    <div class="abas">
-      <button class="aba ativa" data-alvo="saida-resumo" type="button">Resumo</button>
-      <button class="aba" data-alvo="saida-transcricao" type="button">Transcrição</button>
-    </div>
-
-    <div id="saida-resumo" class="painel-aba">
-      <div class="acoes acoes-topo">
-        <button id="btn-resumir" class="btn" type="button">Gerar resumo, questões e flashcards</button>
-        <button id="btn-baixar-resumo" class="btn-texto oculto" type="button">Baixar .md</button>
+        <p class="solta-titulo">Solte o áudio da aula aqui</p>
+        <button id="btn-escolher" class="pill pill-forte" type="button">Escolher arquivo</button>
+        <p class="solta-nota">m4a, mp3, wav, ogg ou o áudio de um vídeo &middot; até 3 horas</p>
       </div>
-      <div id="conteudo-resumo" class="conteudo"></div>
+
+      <div id="cartao-arquivo" class="cartao-arquivo oculto">
+        <canvas id="onda" class="onda-canvas" width="1200" height="120"></canvas>
+        <div class="arquivo-linha">
+          <div class="arquivo-nome">
+            <strong id="nome-arquivo"></strong>
+            <span id="meta-arquivo"></span>
+          </div>
+          <button id="btn-trocar" class="pill pill-clara" type="button">Trocar</button>
+        </div>
+      </div>
     </div>
 
-    <div id="saida-transcricao" class="painel-aba oculto">
-      <div class="acoes acoes-topo">
-        <button id="btn-baixar-transcricao" class="btn-texto" type="button">Baixar .txt</button>
-        <button id="btn-copiar" class="btn-texto" type="button">Copiar</button>
+    <div class="materias">
+      <p class="rotulo-secao">Qual é a matéria?</p>
+      <div id="chips-materia" class="chips"></div>
+      <details class="avancado">
+        <summary>Ver o vocabulário que vai junto com o áudio</summary>
+        <textarea id="glossario" rows="4" spellcheck="false"></textarea>
+        <p class="nota-fina">
+          Isto entra junto com o áudio e faz o motor acertar termo técnico. Medido: em áudio de
+          sala de aula recupera 3 de cada 8 termos que se perdem sem ele. A Groq corta em 224 tokens.
+        </p>
+      </details>
+    </div>
+
+    <button id="btn-transcrever" class="botao-principal" type="button" disabled>
+      Transcrever a aula
+    </button>
+    <p id="aviso-entrada" class="nota-fina centro"></p>
+  </section>
+
+  <!-- ============ PROCESSANDO ============ -->
+  <section class="processando oculto" id="tela-processando">
+    <canvas id="onda-progresso" class="onda-canvas grande" width="1200" height="150"></canvas>
+    <h2 id="titulo-processo">Preparando o áudio…</h2>
+    <p id="detalhe-processo" class="hero-sub"></p>
+    <ol id="etapas" class="etapas"></ol>
+    <button id="btn-cancelar" class="pill pill-clara" type="button">Cancelar</button>
+  </section>
+
+  <!-- ============ RESULTADO ============ -->
+  <section class="resultado oculto" id="tela-resultado">
+    <header class="resultado-topo">
+      <div>
+        <p class="rotulo-secao" id="resultado-materia"></p>
+        <h2 id="resultado-titulo">Aula transcrita</h2>
+        <p class="hero-sub" id="resultado-meta"></p>
       </div>
-      <pre id="conteudo-transcricao" class="conteudo mono"></pre>
+      <div class="resultado-acoes">
+        <button id="btn-nova" class="pill pill-clara" type="button">Outra aula</button>
+        <button id="btn-baixar" class="pill pill-forte" type="button">Baixar</button>
+      </div>
+    </header>
+
+    <div class="abas" role="tablist">
+      <button class="aba ativa" data-alvo="ab-resumo"     type="button" role="tab">Resumo</button>
+      <button class="aba"       data-alvo="ab-prova"      type="button" role="tab">Cai na prova</button>
+      <button class="aba"       data-alvo="ab-questoes"   type="button" role="tab">Questões</button>
+      <button class="aba"       data-alvo="ab-cards"      type="button" role="tab">Flashcards</button>
+      <button class="aba"       data-alvo="ab-transcricao" type="button" role="tab">Transcrição</button>
+    </div>
+
+    <div id="ab-resumo" class="folha">
+      <div id="chamada-resumo" class="chamada">
+        <div>
+          <strong>Falta o resumo.</strong>
+          <p>A transcrição está pronta. Para virar resumo, questões e flashcards, é preciso uma chave da Anthropic.</p>
+        </div>
+        <button id="btn-resumir" class="pill pill-forte" type="button">Gerar</button>
+      </div>
+      <div id="corpo-resumo"></div>
+    </div>
+
+    <div id="ab-prova" class="folha oculto"><div id="corpo-prova"></div></div>
+    <div id="ab-questoes" class="folha oculto"><div id="corpo-questoes"></div></div>
+    <div id="ab-cards" class="folha oculto"><div id="corpo-cards"></div></div>
+
+    <div id="ab-transcricao" class="folha oculto">
+      <div class="folha-acoes">
+        <button id="btn-copiar" class="pill pill-clara" type="button">Copiar tudo</button>
+      </div>
+      <pre id="corpo-transcricao" class="transcricao"></pre>
     </div>
   </section>
 
 </main>
 
-<footer>
+<!-- ============ GAVETA DE CHAVES ============ -->
+<div id="fundo-gaveta" class="fundo-gaveta oculto"></div>
+<aside id="gaveta" class="gaveta oculto" aria-label="Chaves de API">
+  <header class="gaveta-topo">
+    <h2>Minhas chaves</h2>
+    <button id="btn-fechar-gaveta" class="pill pill-clara" type="button">Fechar</button>
+  </header>
+
+  <p class="aviso">
+    Ficam salvas só neste navegador. Não existe servidor neste projeto: elas vão do seu
+    navegador direto para a Groq e para a Anthropic, e não entram no código publicado.
+  </p>
+
+  <label for="chave-groq">Groq <span class="tag tag-obrig">para transcrever</span></label>
+  <input type="password" id="chave-groq" placeholder="gsk_..." autocomplete="off" spellcheck="false">
+  <p class="nota-fina">Grátis até 8 horas de áudio por dia. Pegue em <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com/keys</a>.</p>
+
+  <label for="chave-anthropic">Anthropic <span class="tag">para o resumo</span></label>
+  <input type="password" id="chave-anthropic" placeholder="sk-ant-..." autocomplete="off" spellcheck="false">
+  <p class="nota-fina">Sem ela o site ainda transcreve. Pegue em <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a>.</p>
+
+  <label for="modelo-analise">Modelo do resumo</label>
+  <select id="modelo-analise">
+    <option value="claude-opus-5">Opus 5 &middot; melhor resumo &middot; ~R$ 0,93 a aula</option>
+    <option value="claude-sonnet-5" selected>Sonnet 5 &middot; equilibrado &middot; ~R$ 0,37 a aula</option>
+    <option value="claude-haiku-4-5">Haiku 4.5 &middot; mais barato &middot; ~R$ 0,19 a aula</option>
+  </select>
+
+  <div class="gaveta-acoes">
+    <button id="btn-salvar-chaves" class="pill pill-forte" type="button">Salvar</button>
+    <button id="btn-limpar-chaves" class="pill pill-clara perigo" type="button">Apagar deste navegador</button>
+  </div>
+  <p id="status-chaves" class="nota-fina"></p>
+</aside>
+
+<footer class="rodape">
   <p>
-    Motor: <code>whisper-large-v3-turbo</code> na Groq — escolhido depois de medir 6 motores
-    no mesmo trecho de aula real. <a href="https://github.com/EZJ3ATZ/transcreve-aula#a-bancada" target="_blank" rel="noopener">Ver os números</a>.
+    Transcrito por <code>whisper-large-v3-turbo</code>, escolhido depois de medir seis motores
+    no mesmo trecho de aula real &mdash; <a href="https://github.com/EZJ3ATZ/transcreve-aula#a-bancada" target="_blank" rel="noopener">os números estão aqui</a>.
   </p>
 </footer>
 
