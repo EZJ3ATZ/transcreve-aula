@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Transcreve Aula</title>
+<link rel="preconnect" href="https://api.fontshare.com">
+<link href="https://api.fontshare.com/v2/css?f[]=switzer@400,500,600,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topo">
+  <div class="marca">
+    <span class="marca-sigla">TA</span>
+    <div>
+      <h1>Transcreve Aula</h1>
+      <p class="sub">Grava no gravador do celular. Transcreve e resume aqui.</p>
+    </div>
+  </div>
+  <button id="btn-config" class="btn-texto" type="button">Chaves</button>
+</header>
+
+<main>
+
+  <!-- ETAPA 0: chaves -->
+  <section id="painel-config" class="cartao oculto">
+    <h2>Chaves de API</h2>
+    <p class="nota">
+      As chaves ficam salvas só neste navegador (<code>localStorage</code>). Não passam por
+      nenhum servidor nosso e não vão para o GitHub. Quem abrir o site usa a própria chave.
+    </p>
+
+    <label for="chave-groq">Chave da Groq <span class="obrig">obrigatória</span></label>
+    <input type="password" id="chave-groq" placeholder="gsk_..." autocomplete="off" spellcheck="false">
+    <p class="dica">Transcrição. Grátis até 8 h de áudio por dia. Pegue em <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com/keys</a>.</p>
+
+    <label for="chave-anthropic">Chave da Anthropic <span class="opc">opcional</span></label>
+    <input type="password" id="chave-anthropic" placeholder="sk-ant-..." autocomplete="off" spellcheck="false">
+    <p class="dica">Só para o resumo. Sem ela, o site transcreve e você leva o texto para onde quiser.</p>
+
+    <label for="modelo-analise">Modelo do resumo</label>
+    <select id="modelo-analise">
+      <option value="claude-opus-5">Opus 5 — melhor resumo, ~R$ 0,93 por hora de aula</option>
+      <option value="claude-sonnet-5" selected>Sonnet 5 — ~R$ 0,37 por hora de aula</option>
+      <option value="claude-haiku-4-5">Haiku 4.5 — mais barato, ~R$ 0,19 por hora de aula</option>
+    </select>
+
+    <div class="acoes">
+      <button id="btn-salvar-chaves" class="btn" type="button">Salvar</button>
+      <button id="btn-limpar-chaves" class="btn-texto perigo" type="button">Apagar chaves deste navegador</button>
+    </div>
+    <p id="status-chaves" class="status"></p>
+  </section>
+
+  <!-- ETAPA 1: arquivo + matéria -->
+  <section class="cartao">
+    <h2><span class="passo">1</span> Áudio da aula</h2>
+
+    <div id="area-solta" class="solta">
+      <input type="file" id="arquivo" accept="audio/*,video/*" hidden>
+      <p class="solta-titulo">Arraste o arquivo aqui ou <button id="btn-escolher" class="link" type="button">escolha do computador</button></p>
+      <p class="dica">
+        Grave a aula com o gravador do próprio celular — ele grava com a tela desligada e no
+        bolso. Depois passe o arquivo para cá. m4a, mp3, wav, ogg ou o áudio de um vídeo.
+      </p>
+    </div>
+
+    <div id="info-arquivo" class="info oculto"></div>
+
+    <label for="materia">Matéria da aula</label>
+    <select id="materia"></select>
+    <p class="dica">
+      O vocabulário da matéria entra junto com o áudio e muda o resultado: no meu teste,
+      em áudio de sala de aula ele recuperou 3 de cada 8 termos técnicos que se perdiam sem ele.
+    </p>
+
+    <details class="avancado">
+      <summary>Ver ou editar o vocabulário</summary>
+      <textarea id="glossario" rows="4" spellcheck="false"></textarea>
+      <p class="dica">A Groq corta esse campo em 224 tokens (~150 palavras). Ponha os termos que mais caem na prova primeiro.</p>
+    </details>
+
+    <button id="btn-transcrever" class="btn btn-grande" type="button" disabled>Transcrever</button>
+  </section>
+
+  <!-- ETAPA 2: progresso -->
+  <section id="painel-progresso" class="cartao oculto">
+    <h2><span class="passo">2</span> Andamento</h2>
+    <div class="barra"><div id="barra-preenche"></div></div>
+    <p id="texto-progresso" class="status"></p>
+    <ul id="log" class="log"></ul>
+  </section>
+
+  <!-- ETAPA 3: resultado -->
+  <section id="painel-resultado" class="cartao oculto">
+    <div class="abas">
+      <button class="aba ativa" data-alvo="saida-resumo" type="button">Resumo</button>
+      <button class="aba" data-alvo="saida-transcricao" type="button">Transcrição</button>
+    </div>
+
+    <div id="saida-resumo" class="painel-aba">
+      <div class="acoes acoes-topo">
+        <button id="btn-resumir" class="btn" type="button">Gerar resumo, questões e flashcards</button>
+        <button id="btn-baixar-resumo" class="btn-texto oculto" type="button">Baixar .md</button>
+      </div>
+      <div id="conteudo-resumo" class="conteudo"></div>
+    </div>
+
+    <div id="saida-transcricao" class="painel-aba oculto">
+      <div class="acoes acoes-topo">
+        <button id="btn-baixar-transcricao" class="btn-texto" type="button">Baixar .txt</button>
+        <button id="btn-copiar" class="btn-texto" type="button">Copiar</button>
+      </div>
+      <pre id="conteudo-transcricao" class="conteudo mono"></pre>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <p>
+    Motor: <code>whisper-large-v3-turbo</code> na Groq — escolhido depois de medir 6 motores
+    no mesmo trecho de aula real. <a href="https://github.com/EZJ3ATZ/transcreve-aula#a-bancada" target="_blank" rel="noopener">Ver os números</a>.
+  </p>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
